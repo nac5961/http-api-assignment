@@ -6,7 +6,129 @@
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
   <script type="text/babel">
-
+  
+	//Function to format the id to be user friendly
+	const formatStatusCode = (statusCode) => {
+		let formattedCode = '';
+	
+		//Set the appropriate message to display
+		switch(statusCode){
+			case 'success':
+				formattedCode = 'Success';
+				break;
+			case 'badRequest':
+				formattedCode = 'Bad Request';
+				break;
+			case 'unauthorized':
+				formattedCode = 'Unauthorized';
+				break;
+			case 'forbidden':
+				formattedCode = 'Forbidden';
+				break;
+			case 'internalError':
+				formattedCode = 'Internal Server Error';
+				break;
+			case 'notImplemented':
+				formattedCode = 'Not Implemented';
+				break;
+			case 'notFound':
+				formattedCode = 'Resource Not Found';
+				break;		
+		}
+		
+		return formattedCode;
+	};
+  
+	const handleResponse = (xhr) => {
+		console.dir(xhr);
+		
+		//Create HTML to add to the page
+		const h1 = document.createElement('h1');
+		const p = document.createElement('p');
+		
+		//Get the type from the xhr object
+		const type = xhr.getResponseHeader('content-type');
+		
+		if (type === 'application/json'){
+			//Get the json as an object
+			const json = JSON.parse(xhr.response);
+			
+			//Set the h1 tag to the correct status 
+			if (json.id) {
+				h1.textContent = formatStatusCode(json.id);
+			}
+			else{
+				h1.textContent = formatStatusCode('success');
+			}
+			
+			//Set the p tag to the message
+			p.textContent = `Message: ${json.message}`;
+		}
+		else if (type === 'text/xml'){
+			//Set the h1 tag to the correct status
+			if (xhr.responseXML.querySelector('id')){
+				h1.textContent = formatStatusCode(xhr.responseXML.querySelector('id').textContent);
+			}
+			else{
+				h1.textContent = formatStatusCode('success');
+			}
+			
+			//Set the p tag to the message
+			p.textContent = `Message: ${xhr.responseXML.querySelector('message').textContent}`;
+		}
+		
+		//Clear any previous content
+		document.querySelector('#content').innerHTML = '';
+		
+		//Display the new content
+		document.querySelector('#content').appendChild(h1);
+		document.querySelector('#content').appendChild(p);
+	};
+  
+	const sendAJAX = (url, type) => {
+		//Create xhr object
+		const xhr = new XMLHttpRequest();
+		
+		//Open connection to server
+		xhr.open('GET', url);
+		
+		//Override the Accept-headers to send the header we want
+		xhr.setRequestHeader('Accept', type);
+		
+		//Setup callback
+		xhr.onload = () => handleResponse(xhr);
+		
+		//Send AJAX request to the server
+		xhr.send();
+	};
+	
+	const getValue = (id) => {
+		//Get a reference to the select element
+		const selectElement = document.querySelector(id);
+		
+		//Return the value selected
+		return selectElement.value;
+	};
+	
+	const init = () => {
+		//Get reference to the button
+		const sendButton = document.querySelector('#send');
+		
+		//Setup function to call when button is clicked
+		const sendJSON = () => {
+			//Get the URL and type
+			const url = getValue('#page');
+			const type = getValue('#type');
+			
+			//Send the AJAX request
+			sendAJAX(url, type);
+		};
+	
+		//Setup event listeners
+		sendButton.addEventListener('click', sendJSON);
+	};
+  
+	window.onload = init;
   </script>
 </head>
 <body>
